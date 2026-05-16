@@ -32,3 +32,50 @@ model Like {
 
   @@id([postId, userIP])
 }
+
+model StoreUser {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  role      String     @default("user")
+  createdAt DateTime   @default(now())
+  purchases Purchase[]
+}
+
+model Product {
+  id          Int            @id @default(autoincrement())
+  sku         String         @unique
+  name        String
+  description String
+  price       Float
+  imageUrl    String
+  category    String
+  stock       Int
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  items       PurchaseItem[]
+}
+
+model Purchase {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  user          StoreUser      @relation(fields: [userId], references: [id])
+  totalAmount   Float
+  paymentStatus String         @default("paid")
+  paymentRef    String
+  createdAt     DateTime       @default(now())
+  items         PurchaseItem[]
+}
+
+model PurchaseItem {
+  id          Int      @id @default(autoincrement())
+  purchaseId  Int
+  purchase    Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  unitPrice   Float
+  productName String
+}
