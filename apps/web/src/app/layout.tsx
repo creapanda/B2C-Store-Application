@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Full-Stack Blog",
-  description: "Blog about full stack development",
+  title: "B2C Store",
+  description: "Browse products, checkout, and review purchases.",
 };
 
 export default async function RootLayout({
@@ -30,7 +30,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme={theme}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-[var(--background)] text-primary`}
+        className={`${geistSans.variable} ${geistMono.variable} text-primary bg-[var(--background)]`}
       >
         <ThemeProvider initialTheme={theme === "dark" ? "dark" : "light"}>
           {children}

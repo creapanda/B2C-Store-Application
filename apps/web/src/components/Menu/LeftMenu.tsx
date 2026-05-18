@@ -20,15 +20,23 @@ export async function LeftMenu({
   return (
     <aside className="w-full max-w-sm space-y-8 border-b border-gray-200 p-6 md:max-w-xs md:border-b-0 md:border-r">
       <div className="space-y-2">
-        <Link href="/" className="text-2xl font-bold text-primary">
-          Full-Stack Blog
+        <Link href="/" className="text-primary text-2xl font-bold">
+          B2C Store
         </Link>
-        <p className="text-sm text-secondary">
-          Articles, categories, tags, and archive navigation.
+        <p className="text-secondary text-sm">
+          Products first, with the original blog archive below.
         </p>
       </div>
       <nav>
         <ul role="list" className="flex flex-col gap-y-7">
+          <li>
+            <Link
+              href="/"
+              className="text-secondary hover:text-primary text-sm font-medium"
+            >
+              Store
+            </Link>
+          </li>
           <li>
             <CategoryList
               posts={activePosts}
@@ -48,7 +56,7 @@ export async function LeftMenu({
           <li>
             <Link
               href="http://localhost:3002"
-              className="text-sm font-medium text-secondary hover:text-primary"
+              className="text-secondary hover:text-primary text-sm font-medium"
             >
               Admin
             </Link>
