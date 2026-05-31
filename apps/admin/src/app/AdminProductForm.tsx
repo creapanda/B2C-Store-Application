@@ -1,48 +1,62 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Post } from "@repo/db/data";
-import { marked } from "marked";
-import { toUrlPath } from "@repo/utils/url";
+import { useState } from "react";
+import type { Product } from "@repo/db/data";
 import styles from "./page.module.css";
 
 type FormValues = {
-  title: string;
+  sku: string;
+  name: string;
   category: string;
   description: string;
-  content: string;
+  price: string;
+  stock: string;
   imageUrl: string;
-  tags: string;
+  active: boolean;
 };
 
 type FormErrors = Partial<Record<keyof FormValues, string>>;
 
-function createInitialValues(post?: Post): FormValues {
+function createInitialValues(product?: Product): FormValues {
   return {
-    title: post?.title ?? "",
-    category: post?.category ?? "",
-    description: post?.description ?? "",
-    content: post?.content ?? "",
-    imageUrl: post?.imageUrl ?? "",
-    tags: post?.tags ?? "",
+    sku: product?.sku ?? "",
+    name: product?.name ?? "",
+    category: product?.category ?? "",
+    description: product?.description ?? "",
+    price: product ? String(product.price) : "",
+    stock: product ? String(product.stock) : "",
+    imageUrl: product?.imageUrl ?? "",
+    active: product?.active ?? true,
   };
 }
 
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {};
+  const price = Number(values.price);
+  const stock = Number(values.stock);
 
-  if (!values.title.trim()) {
-    errors.title = "Title is required";
+  if (!values.sku.trim()) {
+    errors.sku = "SKU is required";
+  }
+
+  if (!values.name.trim()) {
+    errors.name = "Name is required";
+  }
+
+  if (!values.category.trim()) {
+    errors.category = "Category is required";
   }
 
   if (!values.description.trim()) {
     errors.description = "Description is required";
-  } else if (values.description.length > 200) {
-    errors.description = "Description is too long. Maximum is 200 characters";
   }
 
-  if (!values.content.trim()) {
-    errors.content = "Content is required";
+  if (!Number.isFinite(price) || price < 0) {
+    errors.price = "Price must be zero or greater";
+  }
+
+  if (!Number.isInteger(stock) || stock < 0) {
+    errors.stock = "Stock must be a whole number";
   }
 
   if (!values.imageUrl.trim()) {
@@ -55,54 +69,23 @@ function validate(values: FormValues): FormErrors {
     }
   }
 
-  if (!values.tags.trim()) {
-    errors.tags = "At least one tag is required";
-  }
-
   return errors;
 }
 
-export function AdminPostForm({
-  post,
+export function AdminProductForm({
+  product,
   mode,
 }: {
-  post?: Post;
+  product?: Product;
   mode: "create" | "update";
 }) {
-  const [values, setValues] = useState<FormValues>(() => createInitialValues(post));
+  const [values, setValues] = useState<FormValues>(() =>
+    createInitialValues(product),
+  );
   const [errors, setErrors] = useState<FormErrors>({});
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewHtml, setPreviewHtml] = useState("");
   const [showSaveError, setShowSaveError] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  const selectionRef = useRef({ start: 0, end: 0 });
-
-  useEffect(() => {
-    if (!showPreview && contentRef.current) {
-      const textarea = contentRef.current;
-      textarea.focus();
-      textarea.setSelectionRange(selectionRef.current.start, selectionRef.current.end);
-    }
-  }, [showPreview]);
-
-  async function togglePreview() {
-    if (!showPreview) {
-      if (contentRef.current) {
-        selectionRef.current = {
-          start: contentRef.current.selectionStart,
-          end: contentRef.current.selectionEnd,
-        };
-      }
-
-      setPreviewHtml(await marked.parse(values.content));
-      setShowPreview(true);
-      return;
-    }
-
-    setShowPreview(false);
-  }
 
   function updateValue<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -120,8 +103,7 @@ export function AdminPostForm({
     setShowSaveError(false);
     setIsSaving(true);
 
-    const urlId = post?.urlId ?? toUrlPath(values.title);
-    const endpoint = mode === "create" ? "/api/posts" : `/api/posts/${post?.urlId}`;
+    const endpoint = mode === "create" ? "/api/products" : `/api/products/${product?.sku}`;
     const method = mode === "create" ? "POST" : "PUT";
 
     try {
@@ -129,15 +111,14 @@ export function AdminPostForm({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          urlId,
-          title: values.title,
+          sku: values.sku,
+          name: values.name,
           category: values.category,
           description: values.description,
-          content: values.content,
+          price: Number(values.price),
+          stock: Number(values.stock),
           imageUrl: values.imageUrl,
-          tags: values.tags,
-          active: post?.active ?? true,
-          date: post?.date.toISOString() ?? new Date().toISOString(),
+          active: values.active,
         }),
       });
 
@@ -157,23 +138,34 @@ export function AdminPostForm({
       <div className={styles.formShell}>
         <div className={styles.toolbar}>
           <div>
-            <p className={styles.eyebrow}>Editor</p>
+            <p className={styles.eyebrow}>Inventory</p>
             <h1 className={styles.title}>
-              {mode === "create" ? "Create Post" : "Modify Post"}
+              {mode === "create" ? "Create Product" : "Modify Product"}
             </h1>
           </div>
         </div>
 
         <div className={styles.formGrid}>
           <label className={styles.field}>
-            <span>Title</span>
+            <span>SKU</span>
             <input
               className={styles.input}
-              onChange={(event) => updateValue("title", event.target.value)}
+              onChange={(event) => updateValue("sku", event.target.value)}
               type="text"
-              value={values.title}
+              value={values.sku}
             />
-            {errors.title ? <p className={styles.errorText}>{errors.title}</p> : null}
+            {errors.sku ? <p className={styles.errorText}>{errors.sku}</p> : null}
+          </label>
+
+          <label className={styles.field}>
+            <span>Name</span>
+            <input
+              className={styles.input}
+              onChange={(event) => updateValue("name", event.target.value)}
+              type="text"
+              value={values.name}
+            />
+            {errors.name ? <p className={styles.errorText}>{errors.name}</p> : null}
           </label>
 
           <label className={styles.field}>
@@ -184,6 +176,9 @@ export function AdminPostForm({
               type="text"
               value={values.category}
             />
+            {errors.category ? (
+              <p className={styles.errorText}>{errors.category}</p>
+            ) : null}
           </label>
 
           <label className={styles.field}>
@@ -199,36 +194,31 @@ export function AdminPostForm({
             ) : null}
           </label>
 
-          <div className={styles.field}>
-            <div className={styles.previewHeader}>
-              <span>Content</span>
-              <button
-                className={styles.previewButton}
-                onClick={togglePreview}
-                type="button"
-              >
-                {showPreview ? "Close Preview" : "Preview"}
-              </button>
-            </div>
+          <label className={styles.field}>
+            <span>Price</span>
+            <input
+              className={styles.input}
+              min="0"
+              onChange={(event) => updateValue("price", event.target.value)}
+              step="0.01"
+              type="number"
+              value={values.price}
+            />
+            {errors.price ? <p className={styles.errorText}>{errors.price}</p> : null}
+          </label>
 
-            {showPreview ? (
-              <div
-                className={styles.previewBox}
-                data-test-id="content-preview"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
-            ) : (
-              <textarea
-                aria-label="Content"
-                className={styles.textarea}
-                onChange={(event) => updateValue("content", event.target.value)}
-                ref={contentRef}
-                rows={10}
-                value={values.content}
-              />
-            )}
-            {errors.content ? <p className={styles.errorText}>{errors.content}</p> : null}
-          </div>
+          <label className={styles.field}>
+            <span>Stock</span>
+            <input
+              className={styles.input}
+              min="0"
+              onChange={(event) => updateValue("stock", event.target.value)}
+              step="1"
+              type="number"
+              value={values.stock}
+            />
+            {errors.stock ? <p className={styles.errorText}>{errors.stock}</p> : null}
+          </label>
 
           <label className={styles.field}>
             <span>Image URL</span>
@@ -238,7 +228,9 @@ export function AdminPostForm({
               type="text"
               value={values.imageUrl}
             />
-            {errors.imageUrl ? <p className={styles.errorText}>{errors.imageUrl}</p> : null}
+            {errors.imageUrl ? (
+              <p className={styles.errorText}>{errors.imageUrl}</p>
+            ) : null}
           </label>
 
           <img
@@ -248,15 +240,13 @@ export function AdminPostForm({
             src={values.imageUrl || "about:blank"}
           />
 
-          <label className={styles.field}>
-            <span>Tags</span>
+          <label className={styles.checkboxField}>
             <input
-              className={styles.input}
-              onChange={(event) => updateValue("tags", event.target.value)}
-              type="text"
-              value={values.tags}
+              checked={values.active}
+              onChange={(event) => updateValue("active", event.target.checked)}
+              type="checkbox"
             />
-            {errors.tags ? <p className={styles.errorText}>{errors.tags}</p> : null}
+            <span>Active</span>
           </label>
         </div>
 
@@ -265,7 +255,7 @@ export function AdminPostForm({
         ) : null}
 
         {showSuccessMessage ? (
-          <p className={styles.successBanner}>Post updated successfully</p>
+          <p className={styles.successBanner}>Product saved successfully</p>
         ) : null}
 
         <div className={styles.formActions}>

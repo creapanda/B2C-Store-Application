@@ -1,30 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
-import type { Post, Product, PurchaseRecord, StoreUser } from "./data.js";
+import type { Product, PurchaseRecord, StoreUser } from "./data.js";
 
 declare global {
   var prisma: PrismaClient | undefined;
 }
-
-type DbLike = {
-  userIP: string;
-  postId: number;
-};
-
-type DbPost = {
-  id: number;
-  urlId: string;
-  title: string;
-  description: string;
-  content: string;
-  imageUrl: string;
-  category: string;
-  tags: string;
-  date: Date;
-  views: number;
-  active: boolean;
-  Likes?: DbLike[];
-};
 
 type DbProduct = {
   id: number;
@@ -68,15 +48,6 @@ type DbPurchase = {
   items?: DbPurchaseItem[];
 };
 
-type EditablePostInput = Pick<
-  Post,
-  "title" | "description" | "content" | "imageUrl" | "category" | "tags"
-> & {
-  active?: boolean;
-  date?: Date;
-  urlId?: string;
-};
-
 type EditableProductInput = Pick<
   Product,
   "sku" | "name" | "description" | "price" | "imageUrl" | "category" | "stock"
@@ -97,31 +68,6 @@ function getDatabaseUrl() {
   }
 
   return url;
-}
-
-function toUrlPath(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function mapPost(post: DbPost): Post {
-  return {
-    id: post.id,
-    urlId: post.urlId,
-    title: post.title,
-    description: post.description,
-    content: post.content,
-    imageUrl: post.imageUrl,
-    category: post.category,
-    tags: post.tags,
-    date: post.date,
-    views: post.views,
-    active: post.active,
-    likes: post.Likes?.length ?? 0,
-  };
 }
 
 export function hashStorePassword(password: string) {
@@ -194,198 +140,55 @@ export const client = {
   },
 };
 
-async function findManyPosts(where?: unknown) {
-  const records = (await (client.db.post as any).findMany({
-    where,
-    include: {
-      Likes: true,
-    },
-    orderBy: {
-      date: "desc",
-    },
-  })) as DbPost[];
-
-  return records.map(mapPost);
+export async function getAllProducts() {
+  return getProducts();
 }
 
-export async function getAllPosts() {
-  return findManyPosts();
-}
+export async function getProducts(filters?: {
+  active?: boolean;
+  category?: string;
+  query?: string;
+}) {
+  const where: Record<string, unknown> = {};
 
-export async function getActivePosts() {
-  return findManyPosts({ active: true });
-}
-
-export async function getPostByUrlId(urlId: string) {
-  const record = (await (client.db.post as any).findUnique({
-    where: { urlId },
-    include: { Likes: true },
-  })) as DbPost | null;
-
-  return record ? mapPost(record) : null;
-}
-
-export async function incrementPostViews(urlId: string) {
-  const record = (await (client.db.post as any).update({
-    where: { urlId },
-    data: {
-      views: {
-        increment: 1,
-      },
-    },
-    include: { Likes: true },
-  })) as DbPost | null;
-
-  return record ? mapPost(record) : null;
-}
-
-export async function getLikeState(urlId: string, userIP: string) {
-  const post = await getPostByUrlId(urlId);
-
-  if (!post) {
-    return null;
+  if (filters?.active !== undefined) {
+    where.active = filters.active;
   }
 
-  const like = await (client.db.like as any).findUnique({
-    where: {
-      postId_userIP: {
-        postId: post.id,
-        userIP,
-      },
-    },
-  });
-
-  return {
-    likes: post.likes,
-    liked: Boolean(like),
-  };
-}
-
-export async function addLike(urlId: string, userIP: string) {
-  const post = await getPostByUrlId(urlId);
-
-  if (!post) {
-    return null;
+  if (filters?.category?.trim()) {
+    where.category = filters.category.trim();
   }
 
-  const existing = await (client.db.like as any).findUnique({
-    where: {
-      postId_userIP: {
-        postId: post.id,
-        userIP,
-      },
-    },
-  });
-
-  if (!existing) {
-    await (client.db.like as any).create({
-      data: {
-        postId: post.id,
-        userIP,
-      },
-    });
-  }
-
-  return getLikeState(urlId, userIP);
-}
-
-export async function removeLike(urlId: string, userIP: string) {
-  const post = await getPostByUrlId(urlId);
-
-  if (!post) {
-    return null;
-  }
-
-  const existing = await (client.db.like as any).findUnique({
-    where: {
-      postId_userIP: {
-        postId: post.id,
-        userIP,
-      },
-    },
-  });
-
-  if (existing) {
-    await (client.db.like as any).delete({
-      where: {
-        postId_userIP: {
-          postId: post.id,
-          userIP,
+  if (filters?.query?.trim()) {
+    where.OR = [
+      {
+        name: {
+          contains: filters.query.trim(),
+          mode: "insensitive",
         },
       },
-    });
+      {
+        description: {
+          contains: filters.query.trim(),
+          mode: "insensitive",
+        },
+      },
+    ];
   }
 
-  return getLikeState(urlId, userIP);
-}
-
-export async function createPost(input: EditablePostInput) {
-  const record = (await (client.db.post as any).create({
-    data: {
-      title: input.title,
-      description: input.description,
-      content: input.content,
-      imageUrl: input.imageUrl,
-      category: input.category,
-      tags: input.tags,
-      urlId: input.urlId?.trim() || toUrlPath(input.title),
-      active: input.active ?? true,
-      date: input.date ?? new Date(),
-      views: 0,
-    },
-    include: { Likes: true },
-  })) as DbPost;
-
-  return mapPost(record);
-}
-
-export async function updatePost(urlId: string, input: EditablePostInput) {
-  const record = (await (client.db.post as any).update({
-    where: { urlId },
-    data: {
-      title: input.title,
-      description: input.description,
-      content: input.content,
-      imageUrl: input.imageUrl,
-      category: input.category,
-      tags: input.tags,
-      active: input.active,
-      date: input.date,
-      urlId: input.urlId?.trim() || toUrlPath(input.title),
-    },
-    include: { Likes: true },
-  })) as DbPost;
-
-  return mapPost(record);
-}
-
-export async function setPostActive(urlId: string, active: boolean) {
-  const record = (await (client.db.post as any).update({
-    where: { urlId },
-    data: {
-      active,
-    },
-    include: { Likes: true },
-  })) as DbPost;
-
-  return mapPost(record);
-}
-
-export async function getAllProducts() {
   const records = (await ((client.db as any).product).findMany({
+    where: Object.keys(where).length > 0 ? where : undefined,
     orderBy: [{ active: "desc" }, { name: "asc" }],
   })) as DbProduct[];
 
   return records.map(mapProduct);
 }
 
-export async function getActiveProducts() {
-  const records = (await ((client.db as any).product).findMany({
-    where: { active: true },
-    orderBy: { name: "asc" },
-  })) as DbProduct[];
-
-  return records.map(mapProduct);
+export async function getActiveProducts(filters?: {
+  category?: string;
+  query?: string;
+}) {
+  return getProducts({ ...filters, active: true });
 }
 
 export async function getProductBySku(sku: string) {

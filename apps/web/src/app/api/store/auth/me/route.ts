@@ -1,4 +1,3 @@
-import { getPurchases } from "@repo/db/client";
 import { NextResponse } from "next/server";
 import { getStoreAuthUser } from "@/utils/store-auth";
 
@@ -9,6 +8,5 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const purchases = await getPurchases(user.id);
-  return NextResponse.json(purchases);
+  return NextResponse.json(user);
 }
