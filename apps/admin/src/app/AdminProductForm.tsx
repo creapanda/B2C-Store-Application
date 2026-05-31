@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "@repo/db/data";
 import styles from "./page.module.css";
@@ -17,11 +18,13 @@ type FormValues = {
 
 type FormErrors = Partial<Record<keyof FormValues, string>>;
 
+const productCategories = ["Keyboard", "Mouse", "Headset"];
+
 function createInitialValues(product?: Product): FormValues {
   return {
     sku: product?.sku ?? "",
     name: product?.name ?? "",
-    category: product?.category ?? "",
+    category: product?.category ?? productCategories[0],
     description: product?.description ?? "",
     price: product ? String(product.price) : "",
     stock: product ? String(product.stock) : "",
@@ -43,8 +46,8 @@ function validate(values: FormValues): FormErrors {
     errors.name = "Name is required";
   }
 
-  if (!values.category.trim()) {
-    errors.category = "Category is required";
+  if (!productCategories.includes(values.category)) {
+    errors.category = "Select Keyboard, Mouse, or Headset";
   }
 
   if (!values.description.trim()) {
@@ -143,6 +146,9 @@ export function AdminProductForm({
               {mode === "create" ? "Create Product" : "Modify Product"}
             </h1>
           </div>
+          <Link className={styles.secondaryButton} href="/">
+            Back
+          </Link>
         </div>
 
         <div className={styles.formGrid}>
@@ -170,12 +176,17 @@ export function AdminProductForm({
 
           <label className={styles.field}>
             <span>Category</span>
-            <input
+            <select
               className={styles.input}
               onChange={(event) => updateValue("category", event.target.value)}
-              type="text"
               value={values.category}
-            />
+            >
+              {productCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
             {errors.category ? (
               <p className={styles.errorText}>{errors.category}</p>
             ) : null}

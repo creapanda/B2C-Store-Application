@@ -8,6 +8,8 @@ import styles from "./page.module.css";
 type VisibilityFilter = "all" | "active" | "inactive";
 type SortBy = "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
+const productCategories = ["Keyboard", "Mouse", "Headset"];
+
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -87,7 +89,7 @@ export function AdminList({
 
       const matchesCategory =
         categoryFilter.trim() === "" ||
-        product.category.toLowerCase().includes(categoryFilter.toLowerCase());
+        product.category === categoryFilter;
 
       const matchesVisibility =
         visibilityFilter === "all" ||
@@ -115,12 +117,18 @@ export function AdminList({
 
         <label className={styles.field}>
           <span>Filter by category</span>
-          <input
+          <select
             className={styles.input}
             onChange={(event) => setCategoryFilter(event.target.value)}
-            type="text"
             value={categoryFilter}
-          />
+          >
+            <option value="">All categories</option>
+            {productCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className={styles.field}>

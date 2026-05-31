@@ -4,6 +4,8 @@ import { toUrlPath } from "@repo/utils/url";
 import { LinkList } from "./LinkList";
 import { SummaryItem } from "./SummaryItem";
 
+const productCategories = ["Keyboard", "Mouse", "Headset"];
+
 export function CategoryList({
   products,
   selectedCategory,
@@ -11,7 +13,12 @@ export function CategoryList({
   products: Product[];
   selectedCategory?: string;
 }) {
-  const items = categories(products);
+  const categoryCounts = categories(products);
+  const items = productCategories.map((name) => {
+    const existing = categoryCounts.find((item) => item.name === name);
+
+    return { name, count: existing?.count ?? 0 };
+  });
 
   return (
     <LinkList title="Categories">
