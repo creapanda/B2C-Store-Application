@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
+import { products as seedProducts } from "./data.js";
 import type { Product, PurchaseRecord, StoreUser } from "./data.js";
 
 declare global {
@@ -121,6 +122,43 @@ function mapPurchase(purchase: DbPurchase): PurchaseRecord {
   };
 }
 
+function filterSeedProducts(filters?: {
+  active?: boolean;
+  category?: string;
+  query?: string;
+}) {
+  const category = filters?.category?.trim();
+  const query = filters?.query?.trim().toLowerCase();
+
+  return seedProducts
+    .filter((product) => {
+      if (filters?.active !== undefined && product.active !== filters.active) {
+        return false;
+      }
+
+      if (category && product.category !== category) {
+        return false;
+      }
+
+      if (
+        query &&
+        !product.name.toLowerCase().includes(query) &&
+        !product.description.toLowerCase().includes(query)
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.active !== b.active) {
+        return a.active ? -1 : 1;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+}
+
 export const createClient = () => {
   if (global.prisma) {
     return global.prisma;
@@ -166,12 +204,16 @@ export async function getProducts(filters?: {
     ];
   }
 
-  const records = (await ((client.db as any).product).findMany({
-    where: Object.keys(where).length > 0 ? where : undefined,
-    orderBy: [{ active: "desc" }, { name: "asc" }],
-  })) as DbProduct[];
+  try {
+    const records = (await ((client.db as any).product).findMany({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      orderBy: [{ active: "desc" }, { name: "asc" }],
+    })) as DbProduct[];
 
-  return records.map(mapProduct);
+    return records.map(mapProduct);
+  } catch {
+    return filterSeedProducts(filters);
+  }
 }
 
 export async function getActiveProducts(filters?: {
@@ -182,11 +224,17 @@ export async function getActiveProducts(filters?: {
 }
 
 export async function getProductBySku(sku: string) {
-  const record = (await ((client.db as any).product).findUnique({
-    where: { sku },
-  })) as DbProduct | null;
+  try {
+    const record = (await ((client.db as any).product).findUnique({
+      where: { sku },
+    })) as DbProduct | null;
 
-  return record ? mapProduct(record) : null;
+    return record ? mapProduct(record) : null;
+  } catch {
+    return (
+      seedProducts.find((product) => product.sku === sku.toUpperCase()) ?? null
+    );
+  }
 }
 
 export async function createProduct(input: EditableProductInput) {
