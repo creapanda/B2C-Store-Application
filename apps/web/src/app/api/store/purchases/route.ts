@@ -1,14 +1,14 @@
 import { getPurchases } from "@repo/db/client";
 import { NextResponse } from "next/server";
-import { getStoreAuthUser } from "@/utils/store-auth";
 
-export async function GET() {
-  const user = await getStoreAuthUser();
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const userId = Number(url.searchParams.get("userId"));
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return NextResponse.json({ error: "A valid user id is required" }, { status: 400 });
   }
 
-  const purchases = await getPurchases(user.id);
+  const purchases = await getPurchases(userId);
   return NextResponse.json(purchases);
 }

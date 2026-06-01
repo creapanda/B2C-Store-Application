@@ -1,6 +1,5 @@
 import { getStoreUserByEmail, registerStoreUser } from "@repo/db/client";
 import { NextResponse } from "next/server";
-import { setStoreAuthCookie } from "@/utils/store-auth";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -34,7 +33,5 @@ export async function POST(request: Request) {
     password: body.password,
   });
 
-  const response = NextResponse.json(user, { status: 201 });
-  setStoreAuthCookie(response, user);
-  return response;
+  return NextResponse.json(user, { status: 201 });
 }

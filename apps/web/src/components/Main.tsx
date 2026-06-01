@@ -1,24 +1,20 @@
-import type { Product } from "@repo/db/data";
-import { ProductList } from "./Product/List";
+import type { Post } from "@repo/db/data";
+import BlogList from "./Blog/List";
 
 export function Main({
-  products,
+  posts,
   className,
   title,
   description,
 }: {
-  products: Product[];
+  posts: Post[];
   className?: string;
   title?: string;
   description?: string;
 }) {
   return (
     <main className={className}>
-      <ProductList
-        products={products}
-        title={title}
-        description={description}
-      />
+      <BlogList posts={posts} />
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { categories } from "@/functions/categories";
-import type { Product } from "@repo/db/data";
+import type { Post } from "@repo/db/data";
 import { toUrlPath } from "@repo/utils/url";
 import { LinkList } from "./LinkList";
 import { SummaryItem } from "./SummaryItem";
@@ -7,15 +7,15 @@ import { SummaryItem } from "./SummaryItem";
 const productCategories = ["Keyboard", "Mouse", "Headset"];
 
 export function CategoryList({
-  products,
+  posts,
   selectedCategory,
 }: {
-  products: Product[];
+  posts: Post[];
   selectedCategory?: string;
 }) {
-  const categoryCounts = categories(products);
-  const items = productCategories.map((name) => {
-    const existing = categoryCounts.find((item) => item.name === name);
+  const requiredCategories = ["DevOps", "Mongo", "Node", "React"];
+  const items = requiredCategories.map((name) => {
+    const existing = categories(posts).find((item) => item.name === name);
 
     return { name, count: existing?.count ?? 0 };
   });

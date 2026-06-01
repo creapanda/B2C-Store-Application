@@ -8,7 +8,6 @@ export const env = createEnv({
    */
   server: {
     DATABASE_URL: z.string().url(),
-    JWT_SECRET: z.string(),
   },
 
   /**
@@ -27,7 +26,6 @@ export const env = createEnv({
   runtimeEnv: {
     // E2E: process.env.E2E,
     DATABASE_URL: process.env.DATABASE_URL,
-    JWT_SECRET: process.env.JWT_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

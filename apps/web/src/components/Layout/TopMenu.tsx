@@ -25,12 +25,12 @@ export function TopMenu({ query }: { query?: string }) {
     <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <form action="#" method="GET" className="grid flex-1 grid-cols-1">
         <input
-          aria-label="Search products"
+          aria-label="Search posts"
           className="w-full rounded-md border border-gray-300 bg-transparent px-4 py-2 text-sm text-primary outline-none focus:border-gray-500"
           defaultValue={query ?? ""}
           name="q"
           onChange={handleSearch}
-          placeholder="Search products"
+          placeholder="Search"
           type="search"
         />
       </form>

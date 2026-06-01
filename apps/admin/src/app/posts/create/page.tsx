@@ -1,4 +1,4 @@
-import { AdminProductForm } from "../../AdminProductForm";
+import { AdminPostForm } from "../../AdminPostForm";
 import { AdminSignIn } from "../../AdminSignIn";
 import { isLoggedIn } from "../../../utils/auth";
 
@@ -9,5 +9,5 @@ export default async function Page() {
     return <AdminSignIn />;
   }
 
-  return <AdminProductForm mode="create" />;
+  return <AdminPostForm mode="create" />;
 }
