@@ -259,6 +259,29 @@
   cursor: pointer;
 }
 
+.productActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dangerButton {
+  border: 1px solid #a31631;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  background: transparent;
+  color: #a31631;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.statusButton:disabled,
+.dangerButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .previewHeader {
   display: flex;
   align-items: center;

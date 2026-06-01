@@ -44,8 +44,10 @@ export function AdminList({
   const [sortBy, setSortBy] = useState<SortBy>("name-asc");
   const [items, setItems] = useState(products);
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function toggleActive(product: Product) {
+    setError("");
     setLoadingSku(product.sku);
 
     try {
@@ -62,6 +64,32 @@ export function AdminList({
         current.map((item) =>
           item.sku === product.sku ? { ...item, active: updatedProduct.active } : item,
         ),
+      );
+    } finally {
+      setLoadingSku(null);
+    }
+  }
+
+  async function removeProduct(product: Product) {
+    if (!window.confirm(`Remove ${product.name}?`)) {
+      return;
+    }
+
+    setError("");
+    setLoadingSku(product.sku);
+
+    try {
+      const response = await fetch(`/api/products/${product.sku}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        setError("Unable to remove product.");
+        return;
+      }
+
+      setItems((current) =>
+        current.filter((item) => item.sku !== product.sku),
       );
     } finally {
       setLoadingSku(null);
@@ -148,6 +176,7 @@ export function AdminList({
         </section>
 
         <section className={styles.list}>
+          {error ? <p className={styles.errorBanner}>{error}</p> : null}
           {filteredProducts.map((product) => (
             <article className={styles.article} key={product.id}>
               <img
@@ -162,14 +191,24 @@ export function AdminList({
                 <p>{product.sku}</p>
                 <p>{product.category}</p>
                 <p>{formatPrice(product.price)} - {product.stock} in stock</p>
-                <button
-                  className={styles.statusButton}
-                  disabled={loadingSku === product.sku}
-                  type="button"
-                  onClick={() => toggleActive(product)}
-                >
-                  {product.active ? "Active" : "Inactive"}
-                </button>
+                <div className={styles.productActions}>
+                  <button
+                    className={styles.statusButton}
+                    disabled={loadingSku === product.sku}
+                    type="button"
+                    onClick={() => toggleActive(product)}
+                  >
+                    {product.active ? "Active" : "Inactive"}
+                  </button>
+                  <button
+                    className={styles.dangerButton}
+                    disabled={loadingSku === product.sku}
+                    type="button"
+                    onClick={() => removeProduct(product)}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </article>
           ))}

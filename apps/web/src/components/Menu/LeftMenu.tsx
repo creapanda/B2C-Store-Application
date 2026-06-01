@@ -27,14 +27,6 @@ export async function LeftMenu({
               selectedCategory={selectedCategory}
             />
           </li>
-          <li>
-            <Link
-              href="http://localhost:3002"
-              className="text-sm font-medium text-secondary hover:text-primary"
-            >
-              Admin
-            </Link>
-          </li>
         </ul>
       </nav>
     </aside>
