@@ -5,7 +5,7 @@ export function AdminSignIn() {
     <main className={styles.authPage}>
       <section className={styles.authCard}>
         <div className={styles.authHeader}>
-          <p className={styles.eyebrow}>Full Stack Blog Admin</p>
+          <p className={styles.eyebrow}>B2C Store Admin</p>
           <h1>Admin Login</h1>
           <p>Sign in to your account</p>
         </div>
