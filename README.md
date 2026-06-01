@@ -4,7 +4,7 @@ This project is a Turborepo with:
 
 - `apps/web`: customer-facing Next.js app.
 - `apps/admin`: admin Next.js app.
-- `packages/db`: Prisma database package using SQLite for local development.
+- `packages/db`: Prisma database package using PostgreSQL.
 
 ## Local Setup
 
@@ -21,10 +21,10 @@ Create local env files from the examples:
 - `apps/admin/.env.example` -> `apps/admin/.env.local`
 - `packages/db/.env.example` -> `packages/db/.env`
 
-For this local workspace, the dev database URL is:
+Use your Neon connection string for the database URL:
 
 ```env
-DATABASE_URL="file:C:/Users/phuon/Desktop/2026 autumn subject/full stack dev/B2C-Store-Application/packages/dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
 ```
 
 The admin app also needs:
@@ -40,6 +40,7 @@ Prepare the database:
 cd packages/db
 pnpm db:generate
 pnpm db:push
+pnpm db:seed
 ```
 
 Seed data can be loaded from the web app in E2E mode or by importing `seed()` from `@repo/db/seed`.
@@ -77,7 +78,7 @@ Admin project settings:
 Required Vercel environment variables:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
 PASSWORD="admin123"
 JWT_SECRET="use-a-long-random-secret"
 ```
@@ -86,7 +87,19 @@ The build log failure `PASSWORD` and `JWT_SECRET` means those variables were mis
 
 If Vercel says `No Output Directory named "public" found`, open Project Settings -> Build and Output Settings and remove `public` from Output Directory. This is a Next.js app, so Vercel should use its default Next output instead of a static `public` folder.
 
-Note: SQLite is fine for local assignment demos, but Vercel serverless deployments do not provide a persistent writable SQLite database. For a real deployed store with saved purchases, move Prisma to a hosted database such as Vercel Postgres, Neon, Supabase, or Railway.
+Neon setup:
+
+1. Create a Neon project.
+2. Copy the pooled connection string from Neon.
+3. Add it as `DATABASE_URL` in both Vercel projects.
+4. Redeploy the apps. The Vercel build runs `prisma db push` before building.
+5. To add demo products to Neon, run this locally after putting the Neon URL in `packages/db/.env`:
+
+```bash
+cd packages/db
+pnpm db:push
+pnpm db:seed
+```
 
 ## Store Backend
 

@@ -7,10 +7,11 @@ export async function seed() {
   await ((client.db as any).product).deleteMany();
   await ((client.db as any).storeUser).deleteMany();
 
+  const createdProducts = [];
+
   for (const product of products) {
-    await ((client.db as any).product).create({
+    const createdProduct = await ((client.db as any).product).create({
       data: {
-        id: product.id,
         sku: product.sku,
         name: product.name,
         description: product.description,
@@ -22,6 +23,8 @@ export async function seed() {
         createdAt: product.createdAt,
       },
     });
+
+    createdProducts.push(createdProduct);
   }
 
   const user = await ((client.db as any).storeUser).create({
@@ -33,6 +36,17 @@ export async function seed() {
     },
   });
 
+  const headset = createdProducts.find(
+    (product) => product.sku === "HEADSET-PULSE-01",
+  );
+  const keyboard = createdProducts.find(
+    (product) => product.sku === "KEYBOARD-MECH-02",
+  );
+
+  if (!headset || !keyboard) {
+    throw new Error("Seed products were not created");
+  }
+
   await ((client.db as any).purchase).create({
     data: {
       userId: user.id,
@@ -42,13 +56,13 @@ export async function seed() {
       items: {
         create: [
           {
-            productId: 1,
+            productId: headset.id,
             quantity: 1,
             unitPrice: 129,
             productName: "Pulse Wireless Headset",
           },
           {
-            productId: 2,
+            productId: keyboard.id,
             quantity: 1,
             unitPrice: 58,
             productName: "Tactile Mechanical Keyboard",
