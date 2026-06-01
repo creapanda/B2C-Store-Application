@@ -2,8 +2,6 @@ import { deleteProduct, getProductBySku, updateProduct } from "@repo/db/client";
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "../../../../utils/auth";
 
-const productCategories = ["Keyboard", "Mouse", "Headset"];
-
 function parseProductBody(body: unknown, fallbackSku: string) {
   if (typeof body !== "object" || body === null) {
     return null;
@@ -26,7 +24,6 @@ function parseProductBody(body: unknown, fallbackSku: string) {
     typeof values.name !== "string" ||
     typeof values.description !== "string" ||
     typeof values.category !== "string" ||
-    !productCategories.includes(values.category) ||
     typeof values.imageUrl !== "string" ||
     !Number.isFinite(price) ||
     price < 0 ||

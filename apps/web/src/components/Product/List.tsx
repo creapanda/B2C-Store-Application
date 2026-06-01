@@ -26,15 +26,7 @@ function getFormValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-export function ProductList({
-  products,
-  title = "Storefront",
-  description,
-}: {
-  products: Product[];
-  title?: string;
-  description?: string;
-}) {
+export function ProductList({ products }: { products: Product[] }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -200,12 +192,7 @@ export function ProductList({
         <p className="text-sm font-medium text-secondary">
           {products.length} Products
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-primary">{title}</h1>
-        {description ? (
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">
-            {description}
-          </p>
-        ) : null}
+        <h1 className="mt-2 text-3xl font-bold text-primary">Storefront</h1>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
