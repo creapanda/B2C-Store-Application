@@ -63,16 +63,16 @@ Customer project settings:
 
 - Root Directory: `apps/web`
 - Framework Preset: Next.js
-- Build Command: `cd ../.. && pnpm turbo build --filter=@repo/web`
-- Install Command: `cd ../.. && pnpm install --frozen-lockfile`
+- Build Command: `pnpm --filter @repo/db db:push && pnpm turbo build --filter=@repo/web`
+- Install Command: `pnpm install --frozen-lockfile`
 - Output Directory: leave empty
 
 Admin project settings:
 
 - Root Directory: `apps/admin`
 - Framework Preset: Next.js
-- Build Command: `cd ../.. && pnpm turbo build --filter=@repo/admin`
-- Install Command: `cd ../.. && pnpm install --frozen-lockfile`
+- Build Command: `pnpm --filter @repo/db db:push && pnpm turbo build --filter=@repo/admin`
+- Install Command: `pnpm install --frozen-lockfile`
 - Output Directory: leave empty
 
 Required Vercel environment variables:

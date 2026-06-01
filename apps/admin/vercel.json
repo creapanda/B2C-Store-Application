@@ -1,4 +1,4 @@
 {
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm --filter @repo/db db:push && pnpm turbo build --filter=@repo/admin"
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @repo/db db:push && pnpm turbo build --filter=@repo/admin"
 }
