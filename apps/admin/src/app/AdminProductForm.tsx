@@ -19,12 +19,13 @@ type FormValues = {
 type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 const productCategories = ["Keyboard", "Mouse", "Headset"];
+const defaultCategory = "Keyboard";
 
 function createInitialValues(product?: Product): FormValues {
   return {
     sku: product?.sku ?? "",
     name: product?.name ?? "",
-    category: product?.category ?? productCategories[0],
+    category: product?.category ?? defaultCategory,
     description: product?.description ?? "",
     price: product ? String(product.price) : "",
     stock: product ? String(product.stock) : "",

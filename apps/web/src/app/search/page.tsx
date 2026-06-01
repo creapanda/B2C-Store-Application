@@ -8,8 +8,7 @@ export default async function Page({
   searchParams: Promise<{ q: string }>;
 }) {
   const { q } = await searchParams;
-  const query = q?.trim() ?? "";
-  const products = await getActiveProducts({ query });
+  const products = await getActiveProducts({ query: q?.trim() ?? "" });
 
   return (
     <AppLayout query={q}>

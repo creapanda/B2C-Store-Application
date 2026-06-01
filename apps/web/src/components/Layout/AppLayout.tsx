@@ -13,9 +13,7 @@ export async function AppLayout({
 }>) {
   return (
     <div className="min-h-screen bg-[var(--background)] text-primary md:flex">
-      <LeftMenu
-        selectedCategory={selectedCategory}
-      />
+      <LeftMenu selectedCategory={selectedCategory} />
       <Content>
         <TopMenu query={query} />
         {children}

@@ -24,12 +24,6 @@ function decodeBase64Url(value: string) {
   return Buffer.from(value, "base64url").toString("utf8");
 }
 
-function signPayload(payload: string) {
-  return createHmac("sha256", getStoreAuthSecret())
-    .update(payload)
-    .digest("base64url");
-}
-
 function getStoreAuthSecret() {
   const secret = process.env.JWT_SECRET;
 
@@ -38,6 +32,12 @@ function getStoreAuthSecret() {
   }
 
   return secret;
+}
+
+function signPayload(payload: string) {
+  return createHmac("sha256", getStoreAuthSecret())
+    .update(payload)
+    .digest("base64url");
 }
 
 function serializeStoreAuthPayload(user: StoreAuthUser) {

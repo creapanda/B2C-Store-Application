@@ -202,7 +202,7 @@ export function ProductList({
         </p>
         <h1 className="mt-2 text-3xl font-bold text-primary">{title}</h1>
         {description ? (
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">
+          <p className="mt-2 max-w-2xl text-sm text-secondary">
             {description}
           </p>
         ) : null}
