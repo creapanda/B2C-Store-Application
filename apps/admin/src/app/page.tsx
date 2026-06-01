@@ -23,7 +23,7 @@ export default async function Home() {
       <div className={styles.toolbar}>
         <div>
           <p className={styles.eyebrow}>Dashboard</p>
-          <h1 className={styles.title}>Store Admin</h1>
+          <h1 className={styles.title}>PNHStore Admin</h1>
         </div>
         <div className={styles.actions}>
           <Link className={styles.secondaryButton} href="/products/create">

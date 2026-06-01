@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   const token = jwt.sign({ admin: true }, env.JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: "30min",
   });
 
   const response = NextResponse.redirect(new URL("/", request.url));

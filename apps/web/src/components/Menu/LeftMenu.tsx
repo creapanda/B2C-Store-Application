@@ -13,10 +13,10 @@ export async function LeftMenu({
     <aside className="w-full max-w-sm space-y-8 border-b border-gray-200 p-6 md:max-w-xs md:border-b-0 md:border-r">
       <div className="space-y-2">
         <Link href="/" className="text-2xl font-bold text-primary">
-          B2C Store
+          PNHStore
         </Link>
         <p className="text-sm text-secondary">
-          Products, categories, and simple checkout APIs.
+          give me your money and i might give you something in return, maybe.
         </p>
       </div>
       <nav>
