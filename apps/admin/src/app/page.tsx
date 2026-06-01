@@ -1,4 +1,4 @@
-import { getAllPosts } from "@repo/db/client";
+import { getAllProducts, getPurchases } from "@repo/db/client";
 import Link from "next/link";
 import { AdminList } from "./AdminList";
 import { AdminSignIn } from "./AdminSignIn";
@@ -13,24 +13,27 @@ export default async function Home() {
     return <AdminSignIn />;
   }
 
-  const posts = await getAllPosts();
+  const [products, purchases] = await Promise.all([
+    getAllProducts(),
+    getPurchases(),
+  ]);
 
   return (
     <main className={styles.main}>
       <div className={styles.toolbar}>
         <div>
           <p className={styles.eyebrow}>Dashboard</p>
-          <h1 className={styles.title}>Admin of Full Stack Blog</h1>
+          <h1 className={styles.title}>Store Admin</h1>
         </div>
         <div className={styles.actions}>
-          <Link className={styles.secondaryButton} href="/posts/create">
-            Create Post
+          <Link className={styles.secondaryButton} href="/products/create">
+            Create Product
           </Link>
           <LogoutButton />
         </div>
       </div>
 
-      <AdminList posts={posts} />
+      <AdminList products={products} purchases={purchases} />
     </main>
   );
 }

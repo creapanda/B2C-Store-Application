@@ -2,6 +2,8 @@ import { createProduct, getAllProducts } from "@repo/db/client";
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "../../../utils/auth";
 
+const productCategories = ["Keyboard", "Mouse", "Headset"];
+
 function validateProductBody(body: unknown) {
   return (
     typeof body === "object" &&
@@ -13,6 +15,7 @@ function validateProductBody(body: unknown) {
     Number.isFinite((body as { price: number }).price) &&
     (body as { price: number }).price >= 0 &&
     typeof (body as { category?: unknown }).category === "string" &&
+    productCategories.includes((body as { category: string }).category) &&
     typeof (body as { imageUrl?: unknown }).imageUrl === "string" &&
     typeof (body as { stock?: unknown }).stock === "number" &&
     Number.isInteger((body as { stock: number }).stock) &&

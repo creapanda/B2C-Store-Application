@@ -1,5 +1,6 @@
 import { loginStoreUser } from "@repo/db/client";
 import { NextResponse } from "next/server";
+import { setStoreAuthCookie } from "@/utils/store-auth";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -22,5 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  return NextResponse.json(user);
+  const response = NextResponse.json(user);
+  setStoreAuthCookie(response, user);
+  return response;
 }
