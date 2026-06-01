@@ -71,6 +71,12 @@ function getDatabaseUrl() {
   return url;
 }
 
+function shouldUseSeedProducts() {
+  const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
+
+  return process.env.VERCEL === "1" && (!url || url.startsWith("file:"));
+}
+
 export function hashStorePassword(password: string) {
   return createHash("sha256").update(password).digest("hex");
 }
@@ -187,6 +193,10 @@ export async function getProducts(filters?: {
   category?: string;
   query?: string;
 }) {
+  if (shouldUseSeedProducts()) {
+    return filterSeedProducts(filters);
+  }
+
   const where: Record<string, unknown> = {};
 
   if (filters?.active !== undefined) {
@@ -224,6 +234,12 @@ export async function getActiveProducts(filters?: {
 }
 
 export async function getProductBySku(sku: string) {
+  if (shouldUseSeedProducts()) {
+    return (
+      seedProducts.find((product) => product.sku === sku.toUpperCase()) ?? null
+    );
+  }
+
   try {
     const record = (await ((client.db as any).product).findUnique({
       where: { sku },
