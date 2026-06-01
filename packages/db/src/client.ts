@@ -74,7 +74,10 @@ function getDatabaseUrl() {
 function shouldUseSeedProducts() {
   const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
 
-  return process.env.VERCEL === "1" && (!url || url.startsWith("file:"));
+  return (
+    (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") &&
+    (!url || url.startsWith("file:"))
+  );
 }
 
 export function hashStorePassword(password: string) {
