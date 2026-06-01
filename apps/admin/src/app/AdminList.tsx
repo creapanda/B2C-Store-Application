@@ -2,187 +2,137 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Post } from "@repo/db/data";
+import type { Product, PurchaseRecord } from "@repo/db/data";
 import styles from "./page.module.css";
 
 type VisibilityFilter = "all" | "active" | "inactive";
-type SortBy = "date-desc" | "date-asc" | "title-asc" | "title-desc";
+type SortBy = "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
-function parseDateFilter(value: string) {
-  const digitsOnly = value.replace(/\D/g, "");
+const productCategories = ["Keyboard", "Mouse", "Headset"];
 
-  if (digitsOnly.length !== 8) {
-    return null;
-  }
-
-  const day = Number(digitsOnly.slice(0, 2));
-  const month = Number(digitsOnly.slice(2, 4));
-  const year = Number(digitsOnly.slice(4, 8));
-
-  if (
-    Number.isNaN(day) ||
-    Number.isNaN(month) ||
-    Number.isNaN(year) ||
-    day <= 0 ||
-    month <= 0
-  ) {
-    return null;
-  }
-
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return parsed;
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(price);
 }
 
-function formatAdminDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function formatTags(tags: string) {
-  return tags
-    .split(",")
-    .map((tag) => `#${tag.trim()}`)
-    .join(", ");
-}
-
-function sortPosts(posts: Post[], sortBy: SortBy) {
-  const sorted = [...posts];
+function sortProducts(products: Product[], sortBy: SortBy) {
+  const sorted = [...products];
 
   sorted.sort((a, b) => {
-    if (sortBy === "title-asc") {
-      return a.title.localeCompare(b.title);
+    if (sortBy === "name-desc") {
+      return b.name.localeCompare(a.name);
     }
 
-    if (sortBy === "title-desc") {
-      return b.title.localeCompare(a.title);
+    if (sortBy === "price-asc") {
+      return a.price - b.price;
     }
 
-    if (sortBy === "date-asc") {
-      return a.date.getTime() - b.date.getTime();
+    if (sortBy === "price-desc") {
+      return b.price - a.price;
     }
 
-    return b.date.getTime() - a.date.getTime();
+    return a.name.localeCompare(b.name);
   });
 
   return sorted;
 }
 
-export function AdminList({ posts }: { posts: Post[] }) {
-  const [contentFilter, setContentFilter] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+export function AdminList({
+  products,
+  purchases,
+}: {
+  products: Product[];
+  purchases: PurchaseRecord[];
+}) {
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
-  const [sortBy, setSortBy] = useState<SortBy>("date-desc");
-  const [items, setItems] = useState(posts);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortBy>("name-asc");
+  const [items, setItems] = useState(products);
+  const [loadingSku, setLoadingSku] = useState<string | null>(null);
 
-  const parsedDate = parseDateFilter(dateFilter);
-
-  async function toggleActive(post: Post) {
-    setLoadingId(post.urlId);
+  async function toggleActive(product: Product) {
+    setLoadingSku(product.sku);
 
     try {
-      const response = await fetch(`/api/posts/${post.urlId}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/products/${product.sku}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !post.active }),
+        body: JSON.stringify({ ...product, active: !product.active }),
       });
 
       if (!response.ok) {
         return;
       }
 
-      const updatedPost = await response.json();
+      const updatedProduct = await response.json();
       setItems((current) =>
         current.map((item) =>
-          item.urlId === post.urlId ? { ...item, active: updatedPost.active } : item,
+          item.sku === product.sku ? { ...item, active: updatedProduct.active } : item,
         ),
       );
     } finally {
-      setLoadingId(null);
+      setLoadingSku(null);
     }
   }
 
-  const filteredPosts = sortPosts(
-    items.filter((post) => {
-      const matchesContent =
-        contentFilter.trim() === "" ||
-        post.title.toLowerCase().includes(contentFilter.toLowerCase()) ||
-        post.content.toLowerCase().includes(contentFilter.toLowerCase());
+  const filteredProducts = sortProducts(
+    items.filter((product) => {
+      const matchesQuery =
+        query.trim() === "" ||
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.description.toLowerCase().includes(query.toLowerCase()) ||
+        product.sku.toLowerCase().includes(query.toLowerCase());
 
-      const matchesTag =
-        tagFilter.trim() === "" ||
-        post.tags
-          .split(",")
-          .map((tag) => tag.trim().toLowerCase())
-          .some((tag) => tag.includes(tagFilter.trim().toLowerCase()));
-
-      const matchesDate =
-        !parsedDate || post.date.getTime() >= parsedDate.getTime();
+      const matchesCategory =
+        categoryFilter.trim() === "" ||
+        product.category === categoryFilter;
 
       const matchesVisibility =
         visibilityFilter === "all" ||
-        (visibilityFilter === "active" && post.active) ||
-        (visibilityFilter === "inactive" && !post.active);
+        (visibilityFilter === "active" && product.active) ||
+        (visibilityFilter === "inactive" && !product.active);
 
-      return (
-        matchesContent && matchesTag && matchesDate && matchesVisibility
-      );
+      return matchesQuery && matchesCategory && matchesVisibility;
     }),
     sortBy,
   );
 
   return (
-    <>
+    <div className={styles.dashboardGrid}>
+      <section>
       <section className={styles.filters}>
         <label className={styles.field}>
-          <span>Filter by Content:</span>
+          <span>Filter products</span>
           <input
             className={styles.input}
-            onChange={(event) => setContentFilter(event.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             type="text"
-            value={contentFilter}
+            value={query}
           />
         </label>
 
         <label className={styles.field}>
-          <span>Filter by Tag:</span>
-          <input
+          <span>Filter by category</span>
+          <select
             className={styles.input}
-            onChange={(event) => setTagFilter(event.target.value)}
-            type="text"
-            value={tagFilter}
-          />
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            value={categoryFilter}
+          >
+            <option value="">All categories</option>
+            {productCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className={styles.field}>
-          <span>Filter by Date Created:</span>
-          <input
-            className={styles.input}
-            inputMode="numeric"
-            onChange={(event) => setDateFilter(event.target.value)}
-            placeholder="DDMMYYYY"
-            type="text"
-            value={dateFilter}
-          />
-        </label>
-
-        <label className={styles.field}>
-          <span>Filter by Visibility:</span>
+          <span>Filter by visibility</span>
           <select
             className={styles.input}
             onChange={(event) =>
@@ -197,47 +147,85 @@ export function AdminList({ posts }: { posts: Post[] }) {
         </label>
 
         <label className={styles.field}>
-          <span>Sort By:</span>
+          <span>Sort by</span>
           <select
             className={styles.input}
             onChange={(event) => setSortBy(event.target.value as SortBy)}
             value={sortBy}
           >
-            <option value="date-desc">Date Desc</option>
-            <option value="date-asc">Date Asc</option>
-            <option value="title-asc">Title Asc</option>
-            <option value="title-desc">Title Desc</option>
+            <option value="name-asc">Name Asc</option>
+            <option value="name-desc">Name Desc</option>
+            <option value="price-asc">Price Asc</option>
+            <option value="price-desc">Price Desc</option>
           </select>
         </label>
       </section>
 
       <section className={styles.list}>
-        {filteredPosts.map((post) => (
-          <article className={styles.article} key={post.id}>
+        {filteredProducts.map((product) => (
+          <article className={styles.article} key={product.id}>
             <img
-              alt={post.title}
+              alt={product.name}
               className={styles.articleImage}
-              src={post.imageUrl}
+              src={product.imageUrl}
             />
             <div className={styles.articleBody}>
-              <Link className={styles.articleTitle} href={`/post/${post.urlId}`}>
-                {post.title}
+              <Link className={styles.articleTitle} href={`/product/${product.sku}`}>
+                {product.name}
               </Link>
-              <p>{formatTags(post.tags)}</p>
-              <p>Posted on {formatAdminDate(post.date)}</p>
-              <p>{post.category}</p>
+              <p>{product.sku}</p>
+              <p>{product.category}</p>
+              <p>{formatPrice(product.price)} - {product.stock} in stock</p>
               <button
                 className={styles.statusButton}
-                disabled={loadingId === post.urlId}
+                disabled={loadingSku === product.sku}
                 type="button"
-                onClick={() => toggleActive(post)}
+                onClick={() => toggleActive(product)}
               >
-                {post.active ? "Active" : "Inactive"}
+                {product.active ? "Active" : "Inactive"}
               </button>
             </div>
           </article>
         ))}
       </section>
-    </>
+      </section>
+
+      <section className={styles.purchasePanel}>
+        <div>
+          <p className={styles.eyebrow}>Orders</p>
+          <h2 className={styles.sectionTitle}>Purchase Records</h2>
+        </div>
+
+        {purchases.length === 0 ? (
+          <p className={styles.mutedText}>No purchase records yet.</p>
+        ) : (
+          <div className={styles.purchaseList}>
+            {purchases.map((purchase) => (
+              <article className={styles.purchaseCard} key={purchase.id}>
+                <div className={styles.purchaseHeader}>
+                  <div>
+                    <h3>{purchase.paymentRef}</h3>
+                    <p>{purchase.userName}</p>
+                    <p>{purchase.userEmail}</p>
+                  </div>
+                  <strong>{formatPrice(purchase.totalAmount)}</strong>
+                </div>
+                <p className={styles.mutedText}>
+                  {new Date(purchase.createdAt).toLocaleString()}
+                </p>
+                <ul className={styles.purchaseItems}>
+                  {purchase.items.map((item) => (
+                    <li key={item.id}>
+                      {item.quantity} x {item.productName} (
+                      {formatPrice(item.unitPrice)})
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
