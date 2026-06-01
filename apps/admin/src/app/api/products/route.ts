@@ -1,26 +1,12 @@
-import { createProduct, getAllProducts } from "@repo/db/client";
+import { createProduct, getProducts } from "@repo/db/client";
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "../../../utils/auth";
+import { parseProductInput } from "../../../utils/storeProducts";
 
-const productCategories = ["Keyboard", "Mouse", "Headset"];
-
-function validateProductBody(body: unknown) {
-  return (
-    typeof body === "object" &&
-    body !== null &&
-    typeof (body as { sku?: unknown }).sku === "string" &&
-    typeof (body as { name?: unknown }).name === "string" &&
-    typeof (body as { description?: unknown }).description === "string" &&
-    typeof (body as { price?: unknown }).price === "number" &&
-    Number.isFinite((body as { price: number }).price) &&
-    (body as { price: number }).price >= 0 &&
-    typeof (body as { category?: unknown }).category === "string" &&
-    productCategories.includes((body as { category: string }).category) &&
-    typeof (body as { imageUrl?: unknown }).imageUrl === "string" &&
-    typeof (body as { stock?: unknown }).stock === "number" &&
-    Number.isInteger((body as { stock: number }).stock) &&
-    (body as { stock: number }).stock >= 0
-  );
+function prismaErrorCode(error: unknown) {
+  return typeof error === "object" && error !== null
+    ? (error as { code?: unknown }).code
+    : null;
 }
 
 export async function GET() {
@@ -28,7 +14,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.json(await getAllProducts());
+  const products = await getProducts({ includeInactive: true });
+  return NextResponse.json(products);
 }
 
 export async function POST(request: Request) {
@@ -36,9 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  const input = parseProductInput(await request.json());
 
-  if (!validateProductBody(body)) {
+  if (!input) {
     return NextResponse.json(
       { error: "Missing or invalid product fields" },
       { status: 400 },
@@ -47,21 +34,33 @@ export async function POST(request: Request) {
 
   try {
     const product = await createProduct({
-      sku: body.sku,
-      name: body.name,
-      description: body.description,
-      price: body.price,
-      category: body.category,
-      imageUrl: body.imageUrl,
-      stock: body.stock,
-      active: body.active !== undefined ? Boolean(body.active) : true,
+      name: input.name ?? "",
+      description: input.description ?? "",
+      imageUrl: input.imageUrl ?? "",
+      priceCents: input.priceCents ?? 0,
+      stockQuantity: input.stockQuantity ?? 0,
+      categoryId: input.categoryId,
+      categorySlug: input.categorySlug,
+      active: input.active,
+      slug: input.slug,
     });
 
     return NextResponse.json(product, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Unable to create product" },
-      { status: 400 },
-    );
+  } catch (error) {
+    if (prismaErrorCode(error) === "P2002") {
+      return NextResponse.json(
+        { error: "Product slug already exists" },
+        { status: 409 },
+      );
+    }
+
+    if (prismaErrorCode(error) === "P2025") {
+      return NextResponse.json(
+        { error: "Product category not found" },
+        { status: 400 },
+      );
+    }
+
+    throw error;
   }
 }

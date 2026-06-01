@@ -7,8 +7,7 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
-    JWT_SECRET: z.string(),
+    DATABASE_URL: z.string().min(1),
   },
 
   /**
