@@ -18,7 +18,7 @@ type AuthUser = {
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "AUD",
   }).format(price);
 }
 
@@ -238,7 +238,7 @@ export function ProductList({
                   </span>
                 </div>
                 <button
-                  className="rounded-md bg-gray-950 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-gray-100 dark:text-gray-950"
+                  className="rounded-md bg-gray-950 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-gray-100 dark:text-gray-950 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
                   disabled={product.stock === 0}
                   onClick={() => addToCart(product)}
                   type="button"
@@ -319,7 +319,7 @@ export function ProductList({
             </div>
 
             <button
-              className="mt-4 w-full rounded-md bg-wsu px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="mt-4 w-full rounded-md bg-wsu px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
               disabled={isCheckingOut}
               onClick={checkout}
               type="button"
@@ -380,7 +380,7 @@ export function ProductList({
                   />
                 </label>
                 <button
-                  className="rounded-md bg-gray-950 px-3 py-2 text-sm font-semibold text-white dark:bg-gray-100 dark:text-gray-950"
+                  className="rounded-md bg-gray-950 px-3 py-2 text-sm font-semibold text-white dark:bg-gray-100 dark:text-gray-950 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
                   type="submit"
                 >
                   {authMode === "login" ? "Sign in" : "Create account"}
