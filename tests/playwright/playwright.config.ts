@@ -58,7 +58,7 @@ export default defineConfig({
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
-      name: "chromium",
+      name: "admin-chromium",
       testDir: "./tests/admin",
       use: {
         ...devices["Desktop Chrome"],
@@ -67,7 +67,7 @@ export default defineConfig({
       dependencies: process.env.CI ? ["setup"] : [],
     },
     {
-      name: "chromium",
+      name: "web-chromium",
       testDir: "./tests/web",
       use: {
         ...devices["Desktop Chrome"],
