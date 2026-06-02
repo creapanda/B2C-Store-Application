@@ -30,8 +30,8 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
 The admin app also needs:
 
 ```env
-PASSWORD="123"
-JWT_SECRET="PhuongDavidCreapanda"
+PASSWORD="secret"
+JWT_SECRET="secret"
 ```
 
 Prepare the database:
@@ -79,7 +79,7 @@ Required Vercel environment variables:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
-PASSWORD="admin123"
+PASSWORD="secret"
 JWT_SECRET="use-a-long-random-secret"
 ```
 
