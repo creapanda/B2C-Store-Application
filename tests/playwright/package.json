@@ -5,6 +5,7 @@
   "scripts": {
     "start:web": "pnpm --filter web start --port 3001",
     "start:admin": "pnpm --filter admin start --port 3002",
+    "test": "pnpm playwright test",
     "test-1": "pnpm playwright test --grep \"@a1\"",
     "test-2": "pnpm playwright test --grep \"@a2\"",
     "test-3": "pnpm playwright test --grep \"@a3\"",

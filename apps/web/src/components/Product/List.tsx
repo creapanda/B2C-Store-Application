@@ -386,7 +386,7 @@ export function ProductList({
                   {authMode === "login" ? "Sign in" : "Create account"}
                 </button>
                 <button
-                  className="text-left text-sm font-semibold text-secondary"
+                  className="text-left text-sm font-semibold text-secondary hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
                   onClick={() =>
                     setAuthMode(authMode === "login" ? "register" : "login")
                   }
