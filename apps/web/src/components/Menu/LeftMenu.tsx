@@ -16,7 +16,7 @@ export async function LeftMenu({
           PNHStore
         </Link>
         <p className="text-sm text-secondary">
-          give me your money and i might give you something in return, maybe.
+          find good stuff for your set up here.
         </p>
       </div>
       <nav>
