@@ -122,7 +122,7 @@ export function setStoreAuthCookie(response: {
 }, user: StoreAuthUser) {
   response.cookies.set(STORE_AUTH_COOKIE, serializeStoreAuthPayload(user), {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: STORE_AUTH_MAX_AGE,

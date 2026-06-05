@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { products as seedProducts } from "./data.js";
 import type { Product, PurchaseRecord, StoreUser } from "./data.js";
 
@@ -80,8 +80,50 @@ function shouldUseSeedProducts() {
   );
 }
 
-export function hashStorePassword(password: string) {
+const SCRYPT_KEY_LENGTH = 64;
+const SCRYPT_SALT_LENGTH = 16;
+
+function hashStorePasswordLegacy(password: string) {
   return createHash("sha256").update(password).digest("hex");
+}
+
+export function hashStorePassword(password: string) {
+  const salt = randomBytes(SCRYPT_SALT_LENGTH).toString("hex");
+  const derivedKey = scryptSync(password, salt, SCRYPT_KEY_LENGTH);
+  return `scrypt$${salt}$${derivedKey.toString("hex")}`;
+}
+
+function verifyStorePassword(password: string, storedPassword: string) {
+  if (typeof storedPassword !== "string") {
+    return false;
+  }
+
+  if (storedPassword.startsWith("scrypt$")) {
+    const [, salt, hash] = storedPassword.split("$");
+
+    if (!salt || !hash) {
+      return false;
+    }
+
+    const derivedKey = scryptSync(password, salt, SCRYPT_KEY_LENGTH);
+    const hashBuffer = Buffer.from(hash, "hex");
+    const derivedBuffer = Buffer.from(derivedKey);
+
+    if (hashBuffer.length !== derivedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(hashBuffer, derivedBuffer);
+  }
+
+  const legacyHash = Buffer.from(hashStorePasswordLegacy(password), "hex");
+  const storedHash = Buffer.from(storedPassword, "hex");
+
+  if (legacyHash.length !== storedHash.length) {
+    return false;
+  }
+
+  return timingSafeEqual(legacyHash, storedHash);
 }
 
 function mapProduct(product: DbProduct): Product {
@@ -330,7 +372,7 @@ export async function loginStoreUser(email: string, password: string) {
     where: { email: email.toLowerCase() },
   })) as DbStoreUser | null;
 
-  if (!record || record.password !== hashStorePassword(password)) {
+  if (!record || !verifyStorePassword(password, record.password)) {
     return null;
   }
 
