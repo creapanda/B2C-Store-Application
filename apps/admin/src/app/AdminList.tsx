@@ -42,6 +42,8 @@ export function AdminList({
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("name-asc");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [items, setItems] = useState(products);
   const [loadingSku, setLoadingSku] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -114,6 +116,32 @@ export function AdminList({
     }),
     sortBy,
   );
+
+  const sortedPurchases = [...purchases].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
+  const filteredPurchases = sortedPurchases.filter((purchase) => {
+    const purchaseDate = new Date(purchase.createdAt);
+
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      if (purchaseDate < start) {
+        return false;
+      }
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      if (purchaseDate > end) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className={styles.dashboardGrid}>
@@ -221,11 +249,32 @@ export function AdminList({
           <h2 className={styles.sectionTitle}>Purchase Records</h2>
         </div>
 
-        {purchases.length === 0 ? (
+        <div className={styles.filters}>
+          <label className={styles.field}>
+            <span>From date</span>
+            <input
+              className={styles.input}
+              type="date"
+              value={startDate}
+              onChange={(event) => setStartDate(event.target.value)}
+            />
+          </label>
+          <label className={styles.field}>
+            <span>To date</span>
+            <input
+              className={styles.input}
+              type="date"
+              value={endDate}
+              onChange={(event) => setEndDate(event.target.value)}
+            />
+          </label>
+        </div>
+
+        {filteredPurchases.length === 0 ? (
           <p className={styles.mutedText}>No purchase records yet.</p>
         ) : (
           <div className={styles.purchaseList}>
-            {purchases.map((purchase) => (
+            {sortedPurchases.map((purchase) => (
               <article className={styles.purchaseCard} key={purchase.id}>
                 <div className={styles.purchaseHeader}>
                   <div>
