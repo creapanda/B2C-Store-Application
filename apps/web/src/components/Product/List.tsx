@@ -15,6 +15,8 @@ type AuthUser = {
   role: string;
 };
 
+type PriceSort = "default" | "price-asc" | "price-desc";
+
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -28,7 +30,7 @@ function getFormValue(formData: FormData, key: string) {
 
 export function ProductList({
   products,
-  title = "Storefront",
+  title = "Our Products",
   description,
 }: {
   products: Product[];
@@ -41,11 +43,25 @@ export function ProductList({
   const [message, setMessage] = useState("");
   const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [priceSort, setPriceSort] = useState<PriceSort>("default");
 
   const productById = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
+  const sortedProducts = useMemo(() => {
+    const nextProducts = [...products];
+
+    if (priceSort === "price-asc") {
+      nextProducts.sort((a, b) => a.price - b.price);
+    }
+
+    if (priceSort === "price-desc") {
+      nextProducts.sort((a, b) => b.price - a.price);
+    }
+
+    return nextProducts;
+  }, [priceSort, products]);
   const cartTotal = cart.reduce((total, item) => {
     const product = productById.get(item.productId);
     return total + (product?.price ?? 0) * item.quantity;
@@ -196,23 +212,37 @@ export function ProductList({
 
   return (
     <section className="grid gap-6">
-      <div>
-        <p className="text-sm font-medium text-secondary">
-          {products.length} Products
-        </p>
-        <h1 className="mt-2 text-3xl font-bold text-primary">{title}</h1>
-        {description ? (
-          <p className="mt-2 max-w-2xl text-sm text-secondary">
-            {description}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-medium text-secondary">
+            {products.length} Products
           </p>
-        ) : null}
+          <h1 className="mt-2 text-3xl font-bold text-primary">{title}</h1>
+          {description ? (
+            <p className="mt-2 max-w-2xl text-sm text-secondary">
+              {description}
+            </p>
+          ) : null}
+        </div>
+        <label className="grid gap-1 text-sm font-semibold text-primary lg:w-56">
+          <span>Sort by price</span>
+          <select
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+            onChange={(event) => setPriceSort(event.target.value as PriceSort)}
+            value={priceSort}
+          >
+            <option value="default">Default order</option>
+            <option value="price-asc">Cheap to expensive</option>
+            <option value="price-desc">Expensive to cheap</option>
+          </select>
+        </label>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
+        <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {sortedProducts.map((product) => (
             <article
-              className="overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+              className="flex h-full min-h-[30rem] flex-col overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
               data-test-id={`product-${product.id}`}
               key={product.id}
             >
@@ -221,15 +251,19 @@ export function ProductList({
                 className="aspect-[4/3] w-full object-cover"
                 src={product.imageUrl}
               />
-              <div className="grid gap-3 p-4">
+              <div className="flex flex-1 flex-col gap-3 p-4">
                 <div>
                   <p className="text-xs font-semibold uppercase text-secondary">
                     {product.category}
                   </p>
-                  <h2 className="mt-1 text-lg font-bold">{product.name}</h2>
+                  <h2 className="mt-1 min-h-14 text-lg font-bold leading-7">
+                    {product.name}
+                  </h2>
                 </div>
-                <p className="text-sm text-secondary">{product.description}</p>
-                <div className="flex items-center justify-between gap-3">
+                <p className="min-h-[3.75rem] overflow-hidden text-sm text-secondary [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+                  {product.description}
+                </p>
+                <div className="mt-auto flex items-center justify-between gap-3">
                   <span className="text-lg font-bold">
                     {formatPrice(product.price)}
                   </span>
@@ -250,7 +284,7 @@ export function ProductList({
           ))}
         </div>
 
-        <aside className="grid content-start gap-4">
+        <aside className="grid content-start gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
           <section className="rounded-md border border-gray-200 bg-white p-4 text-gray-950 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50">
             <div className="flex items-start justify-between gap-3">
               <div>

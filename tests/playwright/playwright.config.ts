@@ -1,15 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
-import "dotenv/config";
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+
+const envPaths = [
+  path.resolve(__dirname, ".env"),
+  path.resolve(__dirname, "../..", ".env"),
+];
+
+const envFile = envPaths.find((filePath) => fs.existsSync(filePath));
+
+if (envFile) {
+  dotenv.config({ path: envFile });
+}
 
 // Define the directory path
 const authDir = path.resolve(".auth");
@@ -58,22 +61,22 @@ export default defineConfig({
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
-      name: "chromium",
+      name: "chromium-admin",
       testDir: "./tests/admin",
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3002",
       },
-      dependencies: process.env.CI ? ["setup"] : [],
+      dependencies: ["setup"],
     },
     {
-      name: "chromium",
+      name: "chromium-web",
       testDir: "./tests/web",
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3001",
       },
-      dependencies: process.env.CI ? ["setup"] : [],
+      dependencies: ["setup"],
     },
 
     // {
@@ -110,20 +113,18 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI
-    ? [
-        {
-          reuseExistingServer: true,
-          command: "pnpm start:admin",
-          url: "http://localhost:3002",
-          // reuseExistingServer: !process.env.CI,
-        },
-        {
-          reuseExistingServer: true,
-          command: "pnpm start:web",
-          url: "http://localhost:3001",
-          // reuseExistingServer: !process.env.CI,
-        },
-      ]
-    : undefined,
+  webServer: [
+    {
+      reuseExistingServer: true,
+      timeout: 120_000,
+      command: "cd ../.. && pnpm --filter admin dev",
+      url: "http://localhost:3002",
+    },
+    {
+      reuseExistingServer: true,
+      timeout: 120_000,
+      command: "cd ../.. && pnpm --filter web dev",
+      url: "http://localhost:3001",
+    },
+  ],
 });
